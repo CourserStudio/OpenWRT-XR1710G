@@ -91,7 +91,11 @@ if grep -En "^CONFIG_(PACKAGE|DEFAULT)_${forbidden_packages}=y$" "$config_file";
 fi
 
 for package in "${required_packages[@]}"; do
-	if ! grep -Fqx "CONFIG_PACKAGE_${package}=y" "$config_file"; then
+	# Hidden packages have no Kconfig prompt, so a seed value of =y does not
+	# stick. Per-device rootfs selects them as =m and the image makefile
+	# installs them into the matching device rootfs.
+	if ! grep -Fqx "CONFIG_PACKAGE_${package}=y" "$config_file" && \
+	   ! grep -Fqx "CONFIG_PACKAGE_${package}=m" "$config_file"; then
 		echo "$profile config is missing required package: $package" >&2
 		failed=1
 	fi
