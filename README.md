@@ -120,9 +120,9 @@ XG2010G 与 XR1710G 同属 Airoha AN7581 平台，但硬件布局和软件包集
 - 三个无线射频默认启用：2.4GHz 为 HE20/自动信道/28dBm，5GHz 为 EHT160/信道 36/30dBm，6GHz 为 EHT320/信道 37/30dBm。
 - FlowSense 提供 Router/AP 模式、VLAN 标签/PPPoE 透传/AP 模式卸载状态与自定义 Ping 延迟检测；NPU 页面提供 PPE/Frame Engine 与 CPU 频率状态；风扇页面提供实时温度、RPM/PWM 曲线与自定义曲线。
 
-### 预装 LuCI 应用（25 个，含中文界面）
+### 预装 LuCI 应用
 
-#### 设备专属与 Airoha feed
+构建配置只预装这台设备自己的界面，以及防火墙和包管理器：
 
 | 应用 | 来源 | 功能 |
 |------|------|------|
@@ -132,39 +132,11 @@ XG2010G 与 XR1710G 同属 Airoha AN7581 平台，但硬件布局和软件包集
 | `luci-app-airoha-recovery` | [`naoki66/luci-app-airoha`](https://github.com/naoki66/luci-app-airoha) | 一键重启进入 U-Boot HTTP Recovery（一次性触发） |
 | `luci-app-mesh-conf` | [`naoki66/luci-app-airoha`](https://github.com/naoki66/luci-app-airoha) | Mesh 与有线回程配置 |
 | `luci-app-netmode` | [`naoki66/luci-app-airoha`](https://github.com/naoki66/luci-app-airoha) | Router/AP/有线回程网络模式控制 |
-| `luci-app-lucky` | [sirpdboy/luci-app-lucky](https://github.com/sirpdboy/luci-app-lucky) | Lucky（DDNS/反代/端口转发） |
+| `luci-app-mlo` | 上游 LuCI | MLO（Wi-Fi 7 多链路操作） |
+| `luci-app-firewall` | 上游 LuCI | 防火墙（firewall4/nftables） |
+| `luci-app-package-manager` | 上游 LuCI | APK 包管理器 |
 
-#### 网络与远程接入
-
-| 应用 | 功能 |
-|------|------|
-| `luci-app-zerotier` | ZeroTier 虚拟局域网 |
-| `luci-app-ddns-go` | DDNS-Go 动态域名（支持阿里云/Cloudflare/DNSPod） |
-| `luci-app-ddns` | 传统 DDNS 脚本 |
-| `luci-app-upnp` | UPnP 自动端口转发 |
-| `luci-app-firewall` | 防火墙（firewall4/nftables） |
-| `luci-app-arpbind` | IP/MAC 绑定 |
-| `luci-app-mlo` | MLO（Wi-Fi 7 多链路操作） |
-| `luci-app-msd_lite` | MSD Lite 组播播放 |
-
-#### 系统与自动化
-
-| 应用 | 功能 |
-|------|------|
-| `luci-app-package-manager` | APK 包管理器 |
-| `luci-app-ttyd` | Web 终端 |
-| `luci-app-autoreboot` | 定时重启 |
-| `luci-app-timewol` | 定时网络唤醒 |
-| `luci-app-wifischedule` | Wi-Fi 定时开关 |
-| `luci-app-watchcat` | 网络看门狗 |
-| `luci-app-wol` | 网络唤醒 |
-| `luci-app-vlmcsd` | KMS 激活服务 |
-| `luci-app-rtp2httpd` | RTP 转 HTTP |
-| `luci-app-udpxy` | UDP 组播代理 |
-| `luci-app-wechatpush` | 微信推送通知 |
-| `luci-app-wifihistory` | WiFi 历史记录 |
-
-> 为控制固件体积，当前不预装 `luci-app-openclash`、`luci-app-passwall`、`luci-app-adguardhome` 和 `luci-app-smartdns`；SmartDNS 核心及独立 UI 仍保留。
+`1710.config`、`2010.config` 和 `2010-2g.config` 不再选中 Lucky、ZeroTier、DDNS、DDNS-Go、UPnP、ARP 绑定、MSD Lite、ttyd、定时重启、定时唤醒、Wi-Fi 定时、看门狗、网络唤醒、RTP/UDP 组播代理、微信推送、Wi-Fi 历史，以及 `xray-core`、`simple-obfs-client`、`chinadns-ng`、`geoview`、`dns2socks`、`microsocks`、`ipt2socks`、`smartdns`、`vlmcsd`。workflow 执行 `make defconfig` 时会按这份配置生成固件。
 
 ### 主要系统包
 
@@ -174,7 +146,6 @@ XG2010G 与 XR1710G 同属 Airoha AN7581 平台，但硬件布局和软件包集
 - `wpad-mbedtls`（WPA2/WPA3、EHT/MLO 支持）
 - `odhcp6c` / `odhcpd-ipv6only`（IPv6）
 - `ppp` / `ppp-mod-pppoe`（PPPoE）
-- `smartdns` + `smartdns-ui`（DNS 加速/分流）
 - `wireguard-tools` + `luci-proto-wireguard` + `rpcd-mod-wireguard`（WireGuard）
 
 **内核模块（kmod）**
@@ -195,10 +166,6 @@ XG2010G 与 XR1710G 同属 Airoha AN7581 平台，但硬件布局和软件包集
 - `luci-theme-argon` + `luci-theme-bootstrap`
 - `luci-theme-glass`（仅 XR1710G 选择；由 `feeds.conf.default` 的 `glass` feed 从上游仓库安装，执行 `./scripts/feeds update glass && ./scripts/feeds install luci-theme-glass` 可更新）
 - `default-settings-chn`（中文默认设置）
-
-**代理与网络核心**
-- `xray-core` / `simple-obfs-client`
-- `chinadns-ng` / `geoview` / `dns2socks` / `microsocks` / `ipt2socks`
 
 ## GitHub Actions 工作流
 
@@ -300,18 +267,7 @@ bash scripts/summarize-build-errors.sh build.log
 ### LuCI 应用来源
 - [naoki66/luci-app-airoha](https://github.com/naoki66/luci-app-airoha) - Airoha LuCI 应用 feed，包含 `luci-app-airoha-npu`
 - [Gilly1970/Gemtek-W1700K](https://github.com/Gilly1970/Gemtek-W1700K) - Airoha 风扇控制与 FlowSense（commit db3f1c8）
-- [sirpdboy/luci-app-lucky](https://github.com/sirpdboy/luci-app-lucky) - Lucky 多功能工具
-
-### 相关工具
-- [JetBrains](https://www.jetbrains.com/) - 开发工具支持
-- [SourceForge](https://sourceforge.net/) - 镜像托管
 
 ## 许可证
 
 [GPL-2.0-only](https://spdx.org/licenses/GPL-2.0-only.html)（继承 ImmortalWrt）
-
-## 赞赏
-
-如果这个固件对你有帮助，可以请作者喝杯咖啡 ☕
-
-<img src="c6ea388c976395326514814f80d512d5.png" alt="微信赞赏码" width="300">
