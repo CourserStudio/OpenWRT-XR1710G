@@ -171,7 +171,7 @@ XG2010G 与 XR1710G 同属 Airoha AN7581 平台，但硬件布局和软件包集
 
 | 工作流 | 触发方式 | 功能 |
 |--------|---------|------|
-| [build-firmware.yml](.github/workflows/build-firmware.yml) | 手动 (workflow_dispatch) | 构建固件并发布 Release |
+| [build-firmware.yml](.github/workflows/build-firmware.yml) | 推送到 `master` 自动构建；也可手动触发 | 构建固件。自动构建使用 `1710.config`，产物留在 Actions，不发布 Release |
 | [sync-upstream.yml](.github/workflows/sync-upstream.yml) | 每 3 天定时 + 手动 | 同步 ImmortalWrt 上游 |
 
 **构建配置**：仓库根目录的 [1710.config](1710.config)、[2010.config](2010.config) 和 [2010-2g.config](2010-2g.config) 分别对应 XR1710G、XG2010G（1 GiB）与 XG2010G（2 GiB）。`1710.config` 使用 multi-profile 一次构建两个 XR1710G 固件：原版 U-Boot 分区和 OpenWrt U-Boot UBI 布局；Action 默认使用 `1710.config`，也可以在手动触发时选择 `2010.config` 或 `2010-2g.config`。构建流程会执行 `cp <config> .config && bash scripts/set-build-version.sh .config && make defconfig`。

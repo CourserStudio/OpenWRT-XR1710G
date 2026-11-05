@@ -1,6 +1,9 @@
 name: Build Firmware
 
 on:
+  push:
+    branches:
+      - master
   workflow_dispatch:
     inputs:
       config_seed:
@@ -27,6 +30,11 @@ on:
 
 env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+  CONFIG_SEED: ${{ github.event_name == 'workflow_dispatch' && inputs.config_seed || '1710.config' }}
+
+concurrency:
+  group: build-firmware-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   build:
@@ -61,11 +69,11 @@ jobs:
           echo "upstream_commit=$upstream_commit" >> $GITHUB_OUTPUT
           echo "version_number=$version_number" >> $GITHUB_OUTPUT
           echo "version_code=$version_code" >> $GITHUB_OUTPUT
-          case '${{ inputs.config_seed }}' in
+          case "$CONFIG_SEED" in
             1710.config) device_model=XR1710G ;;
             2010.config) device_model=XG2010G ;;
             2010-2g.config) device_model=XG2010G-2G ;;
-            *) echo "Unsupported config seed: ${{ inputs.config_seed }}" >&2; exit 1 ;;
+            *) echo "Unsupported config seed: $CONFIG_SEED" >&2; exit 1 ;;
           esac
           echo "device_model=$device_model" >> $GITHUB_OUTPUT
           echo "Build version: ImmortalWrt-for-Gemtek-brightspeed $device_model $version_number"
@@ -86,7 +94,7 @@ jobs:
 
       - name: Configure
         run: |
-          cp '${{ inputs.config_seed }}' .config
+          cp "$CONFIG_SEED" .config
           BUILD_DATE='${{ steps.version.outputs.date }}' \
           BUILD_ID='${{ steps.version.outputs.build_id }}' \
           REPO_COMMIT='${{ steps.version.outputs.repo_commit }}' \
@@ -156,7 +164,7 @@ jobs:
       - name: Upload artifacts
         uses: actions/upload-artifact@v7
         with:
-          name: gemtek-${{ inputs.config_seed }}-firmware
+          name: gemtek-${{ env.CONFIG_SEED }}-firmware
           path: |
             build.log
             build-verbose.log
@@ -170,7 +178,7 @@ jobs:
         if: always()
 
       - name: Build release body
-        if: github.event.inputs.release_type != 'none'
+        if: github.event_name == 'workflow_dispatch' && github.event.inputs.release_type != 'none'
         id: release_body
         env:
           RELEASE_NOTES: ${{ github.event.inputs.release_notes }}
@@ -182,7 +190,7 @@ jobs:
           } >> $GITHUB_OUTPUT
 
       - name: Create Release
-        if: github.event.inputs.release_type != 'none'
+        if: github.event_name == 'workflow_dispatch' && github.event.inputs.release_type != 'none'
         uses: softprops/action-gh-release@v3
         with:
           tag_name: ${{ format('{0}-{1}', steps.version.outputs.date, steps.version.outputs.repo_commit) }}
